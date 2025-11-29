@@ -313,8 +313,14 @@ const HomePage = () => {
       </section>
       <section className="relative w-full">
         <div className="bg-white pb-20 mt-[-180px] relative z-20">
-          <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 relative">
-            <div className="bg-white rounded-r-xl p-10  z-50">
+          <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 relative -top-6 md:top-0">
+            {/* LEFT CONTENT */}
+            <div
+              className="bg-white rounded-r-xl p-10 z-50
+                      md:order-1 order-2"
+            >
+              {" "}
+              {/* Keep desktop order, move content below image on mobile */}
               <div className="border-l-4 border-green-600 pl-6">
                 <p className="text-gray-700 leading-relaxed">
                   While improving the yield and performance of solar energy
@@ -344,8 +350,14 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* RIGHT IMAGE AGAIN */}
-            <div className="absolute -top-36 right-10 w-2xl">
+            {/* RIGHT IMAGE */}
+            <div
+              className="w-full
+                      md:absolute md:-top-36 md:right-10 md:w-2xl
+                      order-1 md:order-2"
+            >
+              {" "}
+              {/* Make image on top for mobile, keep absolute for desktop */}
               <img
                 src={bgImg}
                 className="rounded-xl shadow-xl w-full h-[390px] object-cover z-10"
@@ -355,8 +367,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      <BlogsCarousel/>
-      <ReviewSection/>
+
+      <BlogsCarousel />
+      <ReviewSection />
     </>
   );
 };
