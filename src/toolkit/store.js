@@ -4,6 +4,7 @@ import { persistReducer, persistStore } from "redux-persist";
 
 import authReducer from "./slices/authSlice";
 import serviceReducer from "./slices/serviceSlice";
+import blogReducer from "./slices/blogSlice";
 
 const persistConfig = {
   key: "root",
@@ -14,6 +15,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   service: serviceReducer,
+  blogs: blogReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

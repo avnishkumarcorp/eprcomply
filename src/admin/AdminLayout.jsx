@@ -6,7 +6,7 @@ const AdminLayout = ({ children }) => {
   const sidebarMenu = [
     { title: "Dashboard", icon: "📊", path: "/dashboard" },
     { title: "Category", icon: "👤", path: "category" },
-    { title: "Orders", icon: "🧾", path: "/orders" },
+    { title: "Blogs", icon: "🧾", path: "blogs" },
     { title: "Settings", icon: "⚙️", path: "/settings" },
   ];
 

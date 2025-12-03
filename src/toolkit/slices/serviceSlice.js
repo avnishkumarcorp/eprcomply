@@ -132,7 +132,7 @@ export const getServiceListBySubCategoryId = createAsyncThunk(
   "getServiceListBySubCategoryId",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/services/public/subcategory/${id}/services`);
+      const response = await api.get(`/api/services/subcategory/${id}/services`);
       return response.data;
     } catch (err) {
       return rejectWithValue(

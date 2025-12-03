@@ -8,6 +8,7 @@ import Category from "./admin/category/Category";
 import Service from "./services/Service";
 import SubCategory from "./admin/subcategory/SubCategory";
 import Services from "./admin/service/Services";
+import Blogs from "./admin/blogs/Blogs";
 
 const App = () => {
   return (
@@ -28,6 +29,7 @@ const App = () => {
             path="category/:categoryId/subcategory/:subcategoryId/services"
             element={<Services />}
           />
+          <Route path="blogs" element={<Blogs />} />
         </Route>
       </Routes>
     </BrowserRouter>

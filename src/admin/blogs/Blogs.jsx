@@ -4,15 +4,6 @@ import Button from "../../components/Button";
 import Modal from "../../components/Modal";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  addService,
-  addSubCategory,
-  deleteSubCategory,
-  getAllSubCategoriesByCategoryId,
-  getServiceListBySubCategoryId,
-  updateService,
-  updateSubCategory,
-} from "../../toolkit/slices/serviceSlice";
 import { Link, useParams } from "react-router-dom";
 import { useToast } from "../../components/ToastProvider";
 import dayjs from "dayjs";
@@ -23,39 +14,51 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Dropdown from "../../components/Dropdown";
 import PopConfirm from "../../components/PopConfirm";
 import { EllipsisVertical } from "lucide-react";
-import FileUploader from "../../components/FileUploader";
-import ImageUploader from "../../components/ImageUploader";
+import {
+  addBlog,
+  deleteBlog,
+  getBlogList,
+  updateBlog,
+} from "../../toolkit/slices/blogSlice";
+import {
+  getAllCategories,
+  getAllSubCategoriesByCategoryId,
+  getServiceListBySubCategoryId,
+} from "../../toolkit/slices/serviceSlice";
 
-const serviceSchema = z.object({
+const blogSchema = z.object({
   title: z.string().nonempty("Title is required"),
   slug: z.string().nonempty("Slug is required"),
-  shortDescription: z.string().nonempty("Short description is required"),
-  fullDescription: z.string().nonempty("Full description is required"),
-  bannerImage: z.string().nonempty("Banner image is required"),
-  thumbnail: z.string().nonempty("Thumbnail is required"),
-  videoUrl: z.string().optional(),
-
+  image: z.string().nonempty("Image is required"),
+  summary: z.string().nonempty("Summary is required"),
+  description: z.string().nonempty("Description is required"),
   metaTitle: z.string().optional(),
   metaKeyword: z.string().optional(),
   metaDescription: z.string().optional(),
-
   displayStatus: z.number(),
-  showHomeStatus: z.number(),
+  searchKeyword: z.string().optional(),
+  categoryId: z.number(),
+  subcategoryId: z.number(),
+  serviceIds: z.array(z.number()).optional(),
 });
 
-const Services = () => {
-  const { userId, categoryId, subcategoryId } = useParams();
+const Blogs = () => {
+  const { userId, categoryId } = useParams();
   const { showToast } = useToast();
   const dispatch = useDispatch();
-  const data = useSelector((state) => state.service.serviceList);
+  const data = useSelector((state) => state.blogs.blogList);
+  const categoryList = useSelector((state) => state.service.categoryList);
+  const subCategoryList = useSelector((state) => state.service.subcategoryList);
+  const serviceList = useSelector((state) => state.service.serviceList);
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({});
   const [rowData, setRowData] = useState(null);
 
   useEffect(() => {
-    dispatch(getServiceListBySubCategoryId(subcategoryId));
-  }, [dispatch, subcategoryId]);
+    dispatch(getBlogList(userId));
+    dispatch(getAllCategories());
+  }, [dispatch, userId]);
 
   const filteredData = useMemo(() => {
     if (!search) return data;
@@ -70,33 +73,34 @@ const Services = () => {
     formState: { errors },
     reset,
   } = useForm({
-    resolver: zodResolver(serviceSchema),
+    resolver: zodResolver(blogSchema),
     defaultValues: {
       title: "",
       slug: "",
-      shortDescription: "",
-      fullDescription: "",
-      bannerImage: "",
-      thumbnail: "",
-      videoUrl: "",
+      image: "",
+      summary: "",
+      description: "",
       metaTitle: "",
       metaKeyword: "",
       metaDescription: "",
       displayStatus: 0,
-      showHomeStatus: 0,
+      searchKeyword: "",
+      categoryId: "",
+      subcategoryId: "",
+      serviceIds: [],
     },
   });
 
   const handleDelete = (rowData) => {
-    dispatch(deleteSubCategory({ id: rowData?.id, userId }))
+    dispatch(deleteBlog({ id: rowData?.id, userId }))
       .then((resp) => {
         if (resp.meta.requestStatus === "fulfilled") {
           showToast({
             title: "Success!",
-            description: "Category has been deleted successfully !.",
+            description: "Blog has been deleted successfully !.",
             status: "success",
           });
-          dispatch(getServiceListBySubCategoryId(subcategoryId));
+          dispatch(getBlogList(userId));
         } else {
           showToast({
             title: resp?.payload?.status,
@@ -108,7 +112,7 @@ const Services = () => {
       .catch(() => {
         showToast({
           title: "Something went wrong !.",
-          description: "Failed to delete category.",
+          description: "Failed to delete blog.",
           status: "error",
         });
       });
@@ -116,28 +120,27 @@ const Services = () => {
 
   const handleEdit = (item) => {
     reset({
-      title: item?.title,
-      slug: item?.slug,
-      shortDescription: item?.shortDescription,
-      fullDescription: item?.fullDescription,
-      bannerImage: item?.bannerImage,
-      thumbnail: item?.thumbnail,
-      videoUrl: item?.videoUrl,
-      metaTitle: item?.metaTitle,
-      metaKeyword: item?.metaKeyword,
-      metaDescription: item?.metaDescription,
-      displayStatus: item?.displayStatus,
-      showHomeStatus: item?.showHomeStatus,
+      title: item.title,
+      slug: item.slug,
+      image: item.image,
+      summary: item.summary,
+      description: item.description,
+      metaTitle: item.metaTitle,
+      metaKeyword: item.metaKeyword,
+      metaDescription: item.metaDescription,
+      displayStatus: item.displayStatus,
+      searchKeyword: item.searchKeyword,
+      categoryId: item.categoryId,
+      subcategoryId: item.subcategoryId,
+      serviceIds: item.serviceIds || [],
     });
     setRowData(item);
     setOpenModal(true);
   };
 
   const onSubmit = (data) => {
-    data.categoryId = categoryId;
-    data.subCategoryId = categoryId;
     if (rowData) {
-      dispatch(updateService({ id: rowData?.id, userId, data }))
+      dispatch(updateBlog({ id: rowData?.id, userId, data }))
         .then((resp) => {
           if (resp.meta.requestStatus === "fulfilled") {
             showToast({
@@ -147,7 +150,7 @@ const Services = () => {
             });
             setOpenModal(false);
             setRowData(null);
-            dispatch(getServiceListBySubCategoryId(subcategoryId));
+            dispatch(getBlogList(userId));
           } else {
             showToast({
               title: resp?.payload?.status,
@@ -159,21 +162,21 @@ const Services = () => {
         .catch(() => {
           showToast({
             title: "Something went wrong !.",
-            description: "Failed to update service.",
+            description: "Failed to update blog.",
             status: "error",
           });
         });
     } else {
-      dispatch(addService({ userId, data }))
+      dispatch(addBlog({ userId, data }))
         .then((resp) => {
           if (resp.meta.requestStatus === "fulfilled") {
             showToast({
               title: "Success!",
-              description: "Service has been added successfully.",
+              description: "Blog has been added successfully.",
               status: "success",
             });
             setOpenModal(false);
-            dispatch(getServiceListBySubCategoryId(subcategoryId));
+            dispatch(getBlogList(userId));
           } else {
             showToast({
               title: resp?.payload?.status,
@@ -185,7 +188,7 @@ const Services = () => {
         .catch(() => {
           showToast({
             title: "Something went wrong !.",
-            description: "Failed to add service.",
+            description: "Failed to add blogs.",
             status: "error",
           });
         });
@@ -270,14 +273,14 @@ const Services = () => {
           onChange={(e) => setSearch(e.target.value)}
           wrapperClassName="w-80"
         />
-        <Button onClick={() => setOpenModal(true)}>Add service</Button>
+        <Button onClick={() => setOpenModal(true)}>Add blog</Button>
       </div>
     );
   }, [search]);
 
   return (
     <>
-      <h2 className="text-lg font-semibold">Service list</h2>
+      <h2 className="text-lg font-semibold">Blogs list</h2>
       <Table
         columns={dummyColumns}
         dataSource={filteredData}
@@ -322,117 +325,132 @@ const Services = () => {
             )}
           </div>
 
-          {/* Short Description */}
-          <div className="flex flex-col col-span-2">
-            <label className="mb-1">Short Description</label>
+          {/* Image */}
+          <div className="flex flex-col">
+            <label className="mb-1">Image URL</label>
             <Controller
-              name="shortDescription"
+              name="image"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="Enter image URL" />
+              )}
+            />
+            {errors.image && (
+              <p className="text-red-600 text-sm">{errors.image.message}</p>
+            )}
+          </div>
+
+          {/* Summary */}
+          <div className="flex flex-col col-span-2">
+            <label className="mb-1">Summary</label>
+            <Controller
+              name="summary"
               control={control}
               render={({ field }) => (
                 <Input
                   as="textarea"
                   rows={3}
                   {...field}
-                  placeholder="Short description"
+                  placeholder="Write summary"
                 />
               )}
             />
-            {errors.shortDescription && (
-              <p className="text-red-600 text-sm">
-                {errors.shortDescription.message}
-              </p>
+            {errors.summary && (
+              <p className="text-red-600 text-sm">{errors.summary.message}</p>
             )}
           </div>
 
-          {/* Full Description */}
+          {/* Description */}
           <div className="flex flex-col col-span-2">
-            <label className="mb-1">Full Description</label>
+            <label className="mb-1">Description</label>
             <Controller
-              name="fullDescription"
+              name="description"
               control={control}
               render={({ field }) => (
                 <Input
                   as="textarea"
                   rows={5}
                   {...field}
-                  placeholder="Full description"
+                  placeholder="Write description"
                 />
               )}
             />
-            {errors.fullDescription && (
+            {errors.description && (
               <p className="text-red-600 text-sm">
-                {errors.fullDescription.message}
+                {errors.description.message}
               </p>
             )}
           </div>
 
-          {/* Banner Image */}
+          {/* Category ID */}
           <div className="flex flex-col">
-            <label className="mb-1">Banner Image</label>
+            <label className="mb-1">Category</label>
             <Controller
-              name="bannerImage"
-              control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="Banner image URL" />
-              )}
-            />
-          </div>
-
-          {/* Thumbnail */}
-          <div className="flex flex-col">
-            <label className="mb-1">Thumbnail</label>
-            <Controller
-              name="thumbnail"
-              control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="Thumbnail URL" />
-              )}
-            />
-          </div>
-
-          {/* Video URL */}
-          <div className="flex flex-col col-span-2">
-            <label className="mb-1">Video URL</label>
-            <Controller
-              name="videoUrl"
-              control={control}
-              render={({ field }) => (
-                <Input {...field} placeholder="Video URL" />
-              )}
-            />
-          </div>
-
-          {/* Display Status */}
-          <div className="flex flex-col">
-            <label className="mb-1">Display Status</label>
-            <Controller
-              name="displayStatus"
+              name="categoryId"
               control={control}
               render={({ field }) => (
                 <Select
-                  {...field}
-                  options={[
-                    { label: "Inactive", value: 0 },
-                    { label: "Active", value: 1 },
-                  ]}
+                  value={field.value}
+                  options={categoryList?.map((c) => ({
+                    label: c.name,
+                    value: c.id,
+                  }))}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    dispatch(getAllSubCategoriesByCategoryId(e));
+                  }}
                 />
               )}
             />
+            {errors.categoryId && (
+              <p className="text-red-600 text-sm">
+                {errors.categoryId.message}
+              </p>
+            )}
           </div>
 
-          {/* Show Home Status */}
+          {/* Subcategory ID */}
           <div className="flex flex-col">
-            <label className="mb-1">Show on Home</label>
+            <label className="mb-1">Subcategory</label>
             <Controller
-              name="showHomeStatus"
+              name="subcategoryId"
               control={control}
               render={({ field }) => (
                 <Select
-                  {...field}
-                  options={[
-                    { label: "No", value: 0 },
-                    { label: "Yes", value: 1 },
-                  ]}
+                  value={field.value}
+                  options={subCategoryList?.map((sc) => ({
+                    label: sc.name,
+                    value: sc.id,
+                  }))}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    dispatch(getServiceListBySubCategoryId(e));
+                  }}
+                />
+              )}
+            />
+            {errors.subcategoryId && (
+              <p className="text-red-600 text-sm">
+                {errors.subcategoryId.message}
+              </p>
+            )}
+          </div>
+
+          {/* Service IDs (MULTI SELECT) */}
+          <div className="flex flex-col col-span-2">
+            <label className="mb-1">Services</label>
+            <Controller
+              name="serviceIds"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  multiple
+                  options={serviceList?.map((s) => ({
+                    label: s.title,
+                    value: s.id,
+                  }))}
+                  onChange={(e) => field.onChange(e)}
                 />
               )}
             />
@@ -457,7 +475,7 @@ const Services = () => {
               name="metaKeyword"
               control={control}
               render={({ field }) => (
-                <Input {...field} placeholder="Meta keywords" />
+                <Input {...field} placeholder="Meta keyword" />
               )}
             />
           </div>
@@ -478,10 +496,40 @@ const Services = () => {
               )}
             />
           </div>
+
+          {/* Display Status */}
+          <div className="flex flex-col">
+            <label className="mb-1">Display Status</label>
+            <Controller
+              name="displayStatus"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  options={[
+                    { label: "Inactive", value: 0 },
+                    { label: "Active", value: 1 },
+                  ]}
+                />
+              )}
+            />
+          </div>
+
+          {/* Search Keyword */}
+          <div className="flex flex-col">
+            <label className="mb-1">Search Keyword</label>
+            <Controller
+              name="searchKeyword"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="Search keyword" />
+              )}
+            />
+          </div>
         </form>
       </Modal>
     </>
   );
 };
 
-export default Services;
+export default Blogs;
